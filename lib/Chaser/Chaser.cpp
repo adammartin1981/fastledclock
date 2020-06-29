@@ -1,5 +1,7 @@
 #include <Arduino.h> /* we need arduino functions to implement this */
-#include <Clock.h>
+
+#define FASTLED_INTERNAL
+
 #include <FastLED.h>
 #include <Time.h>
 
@@ -23,7 +25,6 @@ void chaser_init() {
     FastLED.setBrightness(BRIGHTNESS);
 }
 
-// Fade to Black later
 void chaser_fadeToBlack(int ledToKeep, CRGB ledSet[60]) {
     for (int i = 0; i<NUM_LEDS; i++) {
         if (i != currentLED) {
@@ -62,11 +63,10 @@ void updateSecondLEDS() {
             increment60th(currentLED);
             chaseLEDS[currentLED] = CRGB::Purple;
         }
-        // Need to tidy
+
         if (isLEDAheadOfOther(currentLED, targetLED) && initialSweep)
         {
-            Serial.println("Reset initial sweep to false");
-            // Gone past the 'target'
+            // Gone past the target
             initialSweep = false;
         }
 
