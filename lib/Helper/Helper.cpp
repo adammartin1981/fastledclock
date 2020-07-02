@@ -1,5 +1,6 @@
 #include <Arduino.h>
 #include <FastLED.h>
+#include <Helper.h>
 
 // Helper function that blends one uint8_t toward another by a given amount
 void nblendU8TowardU8(uint8_t &cur, const uint8_t target, uint8_t amount)
@@ -30,4 +31,41 @@ CRGB fadeTowardColor(CRGB &cur, const CRGB &target, uint8_t amount)
     nblendU8TowardU8(cur.green, target.green, amount);
     nblendU8TowardU8(cur.blue, target.blue, amount);
     return cur;
+}
+
+int getNext60Value(int inValue)
+{
+    int nextValue = inValue + 1;
+
+    if (nextValue == 60)
+        return 0;
+
+    return nextValue;
+}
+
+int getPrev60Value(int inValue)
+{
+    int nextValue = inValue - 1;
+
+    if (nextValue == -1)
+    {
+        return 59;
+    }
+
+    return nextValue;
+}
+
+HourLEDStruct getHourLEDS(int currHour, int currMin)
+{
+    HourLEDStruct hours = HourLEDStruct();
+
+    int realHourLED = (currHour > 12 ? currHour - 12 : currHour) * 5;
+
+    int realMinLEDAddition = floor(currMin / 12);
+
+    hours.currHour = realHourLED + realMinLEDAddition;
+    hours.prevHour = getPrev60Value(hours.currHour);
+    hours.nextHour = getNext60Value(hours.currHour);
+
+    return hours;
 }

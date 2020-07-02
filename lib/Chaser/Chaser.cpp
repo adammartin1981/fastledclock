@@ -8,7 +8,7 @@
 
 #define NUM_LEDS 60
 #define LED_PIN 4 // Use 2 on ESP8266
-#define BRIGHTNESS 64
+#define BRIGHTNESS 32
 
 #define LED_TYPE WS2812B
 #define COLOR_ORDER GRB
@@ -28,8 +28,6 @@ static int targetMinuteLED = 0;
 static int targetHourLED = 0;
 
 static bool initialSweep = false;
-
-void setHour();
 
 void chaser_init() {
     FastLED.addLeds<LED_TYPE, LED_PIN, COLOR_ORDER>(clockLEDS, NUM_LEDS).setCorrection(TypicalLEDStrip);
@@ -56,8 +54,6 @@ void chaser_updateMinute(int newMinute)
 
 void chaser_updateHour(int newHour)
 {
-    // Serial.print("UPDATE HOUR: ");
-    // Serial.println(newHour);
     targetHourLED = newHour;
 }
 
@@ -77,25 +73,6 @@ bool isLEDAheadOfOther(int led1, int led2) {
     }
 
     return false;
-}
-
-int getNext60Value(int inValue) {
-    int nextValue = inValue + 1;
-
-    if (nextValue == 60)
-        return 0;
-
-    return nextValue;
-}
-
-int getPrev60Value(int inValue) {
-    int nextValue = inValue - 1;
-
-    if (nextValue == -1) {
-        return 59;
-    }
-
-    return nextValue;
 }
 
 void updateMinutesLEDS() {
@@ -118,88 +95,19 @@ void updateMinutesLEDS() {
     }
 }
 
-void setHour() {
-    int nextHour = getNext60Value(currentHourLED * 5);
-
-    hourLEDS[currentHourLED * 5] = CRGB::Blue;
-    fadeTowardColor(hourLEDS[nextHour], CRGB::Blue, 255 / 60);
-
-    chaser_fadeToBlack(currentHourLED * 5, hourLEDS, 15);
-}
-
-struct HourLEDStruct {
-    int prevHour;
-    int currHour;
-    int nextHour;
-};
-
-HourLEDStruct getHourLEDS(int currHour, int currMin)
-{
-    HourLEDStruct hours = HourLEDStruct();
-
-    // currHour 0 - 12 - 23
-
-    int realHourLED = (currHour > 12 ? currHour -12 : currHour) * 5;
-
-    // Get minute % 12 it to get the 0,1,2,3,4,5 values
-
-    int realMinLEDAddition = floor(currMin / 12);//currMin % 12; // 0,1,2,3,4,5
-
-    hours.currHour = realHourLED + realMinLEDAddition;
-    hours.prevHour = getPrev60Value(hours.currHour);
-    hours.nextHour = getNext60Value(hours.currHour);
-    
-    return hours;
-}
-
-void updateHourLEDS2() {
+void updateHourLEDS() {
     // Ensure we have the latest hour set
     if (targetHourLED != currentHourLED)
     {
         currentHourLED = targetHourLED;        
     }
 
-    // Now loop over the minutes on every tick (or should we do this on every minute tick)
-    // The leds might fade too much otherwise
     HourLEDStruct hoursNow = getHourLEDS(currentHourLED, currentMinuteLED);
 
     EVERY_N_SECONDS(1)
     {
-        hourLEDS[hoursNow.prevHour].fadeToBlackBy(30);
-
+        hourLEDS[hoursNow.prevHour].fadeToBlackBy(20);
         hourLEDS[hoursNow.currHour] = CRGB::Green;
-
-        if (hoursNow.nextHour)
-        {
-
-            if (!hourLEDS[hoursNow.nextHour])
-            {
-                // Set it to black
-                hourLEDS[hoursNow.nextHour] = CHSV(160, 255, 0);
-            }
-
-            fadeTowardColor(hourLEDS[hoursNow.nextHour], CRGB::Green, 1);
-        }
-    }
-}
-
-void updateHourLEDS()
-{
-    // Need to work out transitions from 5 -> 10 (ie the part way through the hour)
-    if (targetHourLED != currentHourLED)
-    {
-        currentHourLED = targetHourLED;
-
-        int nextHour = (currentHourLED * 5);
-
-        // Hidden start colour
-        hourLEDS[nextHour] = CHSV(160, 255, 0);        
-        setHour();
-    }
-
-    EVERY_N_SECONDS(60)
-    {
-        setHour();
     }
 }
 
@@ -222,21 +130,18 @@ void updateSecondLEDS() {
     }
 }
 
+void initialize(CRGB *arr, std::initializer_list<std::size_t> list, CRGB value)
+{
+    for (auto i : list)
+    {
+        arr[i] = value;
+    }
+}
+
 void updateHands() {
-    CRGB color = CRGB(0,10,10);
-    CRGB dcolor = CRGB(0,5,5);
-    handLEDS[59] = handLEDS[0] = handLEDS[1] = color;
-    handLEDS[5] = dcolor;
-    handLEDS[10] = dcolor;
-    handLEDS[15] = color;
-    handLEDS[20] = dcolor;
-    handLEDS[25] = dcolor;
-    handLEDS[30] = color;
-    handLEDS[35] = dcolor;
-    handLEDS[40] = dcolor;
-    handLEDS[45] = color;
-    handLEDS[50] = dcolor;
-    handLEDS[55] = dcolor;
+    initialize(handLEDS, {0}, CRGB(0, 15, 15));
+    initialize(handLEDS, {15,30,45}, CRGB(0, 7, 7));
+    initialize(handLEDS, {5, 10, 20, 25, 35, 40, 50, 55}, CRGB(0, 2, 2));
 }
 
 void combineTime() {
@@ -251,8 +156,7 @@ void combineTime() {
 void chaser_loop() {
     updateSecondLEDS();
     updateMinutesLEDS();
-    // updateHourLEDS();
-    updateHourLEDS2();
+    updateHourLEDS();
     updateHands();
 
     combineTime();
