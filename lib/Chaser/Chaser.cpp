@@ -8,7 +8,7 @@
 
 #define NUM_LEDS 60
 #define LED_PIN 4 // Use 2 on ESP8266
-#define BRIGHTNESS 32
+#define BRIGHTNESS 64
 
 #define LED_TYPE WS2812B
 #define COLOR_ORDER GRB
@@ -139,9 +139,9 @@ void initialize(CRGB *arr, std::initializer_list<std::size_t> list, CRGB value)
 }
 
 void updateHands() {
-    initialize(handLEDS, {0}, CRGB(0, 15, 15));
-    initialize(handLEDS, {15,30,45}, CRGB(0, 7, 7));
-    initialize(handLEDS, {5, 10, 20, 25, 35, 40, 50, 55}, CRGB(0, 2, 2));
+    initialize(handLEDS, {0}, CRGB(15, 15, 0));
+    initialize(handLEDS, {15,30,45}, CRGB(0, 10, 10));
+    initialize(handLEDS, {5, 10, 20, 25, 35, 40, 50, 55}, CRGB(4, 4, 4));
 }
 
 void combineTime() {
